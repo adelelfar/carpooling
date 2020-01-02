@@ -1,0 +1,57 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:layout_width="wrap_content"
+        android:text="I have a car"
+        android:id="@+id/haveCar"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/plate"
+        android:layout_width="wrap_content"
+        android:hint="plate numbers"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/phone"
+        android:layout_width="wrap_content"
+        android:hint="phone numbers"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/home"
+        android:layout_width="wrap_content"
+        android:hint="home location"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/school"
+        android:layout_width="wrap_content"
+        android:hint="school location"
+        android:layout_height="wrap_content"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:layout_width="match_parent"
+        android:text="I want to interact with users that have cars "
+        android:id="@+id/car"
+        android:layout_height="50dp"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:layout_width="match_parent"
+        android:text="I want to interact with users that do not have a car"
+        android:id="@+id/no_car"
+        android:layout_height="50dp"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="save_settings"
+        android:text="save settings"/>
+    <Spinner
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/yourcountrySpinnerobj"/>
+</LinearLayout>
