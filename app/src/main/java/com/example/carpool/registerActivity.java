@@ -46,6 +46,7 @@ import java.util.Map;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 public class registerActivity extends AppCompatActivity {
+
     private FusedLocationProviderClient client;
     GeoPoint loc;
     GoogleSignInClient mGoogleSignInClient;

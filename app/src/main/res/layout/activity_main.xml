@@ -144,7 +144,7 @@
 
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/register"
         android:layout_width="175dp"
         android:layout_height="55dp"
         android:layout_marginStart="8dp"
