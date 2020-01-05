@@ -53,18 +53,18 @@ public class registerActivity extends AppCompatActivity {
 
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final String TAG ="1000" ;
+    private static final String TAG = "1000";
 
     CollectionReference userRef = db.collection("Users");
     EditText nid;
-    Boolean x=false;
-    EditText u,pho;
+    Boolean x = false;
+    EditText u, pho;
     private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-
 
 
 
@@ -345,7 +345,14 @@ public class registerActivity extends AppCompatActivity {
         user.put("phone",phone);
         user.put("location",loc);
         user.put("school",school);
+        user.put("country","Egypt");
+        user.put("access non-drives",true);
         user.put("is driver",driver);
+        if(driver)
+            user.put("plate","xyz 123");
+        else
+            user.put("plate","null");
+
 
         addUser("Users",user);
     }

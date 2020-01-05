@@ -61,8 +61,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     String bdan;
     String country;
     AlertDialog dialog;
-
-
+    boolean see_all;
 
     List<Users> customersList=new ArrayList<>();
 
@@ -138,6 +137,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                                 String schoolId = (String) document.getData().get("school");
                                 String name = (String) document.getData().get("username");
                                 String phone = (String) document.getData().get("phone");
+                                see_all = (boolean)document.getData().get("access all");
                                 boolean isDriver = (boolean) document.getData().get("is driver");
                                 country= (String) document.getData().get("country");
 
@@ -147,14 +147,16 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
                             }
                         }
+                        if(see_all)
                         RetrieveAll();
-                        show_user_location();
+                        else
+                            RetrieveAllDrivers();
+                     //   show_user_location();
                     }
 
                 });
 
     }
-
 
 
 
@@ -176,10 +178,46 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                                         , (boolean) document.getData().get("is driver")
                                         ,String.valueOf(document.getData().get("phone"))
                                         , String.valueOf(document.getData().get("Uid")));
+                                if(!users.uid.equals(mAuth.getUid())) {
+                                    driversList.add(users);
+                                }
+                            }
 
 
-                                driversList.add(users);
 
+                        }
+                        if(driversList.size()<=0)
+                        {
+                            Toast.makeText(MapActivity.this,"No driver yet",Toast.LENGTH_LONG).show();
+                        }
+                        show_drivers_location();
+
+                    }
+                });
+
+    }
+
+    public void RetrieveAllDrivers() {
+        // c.showLoading();
+        db.collection("Users").whereEqualTo("country",country).whereEqualTo("is driver",true)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+
+                                Users users = new Users(String.valueOf(document.getData().get("username"))
+                                        , ((GeoPoint) document.getData().get("location"))
+                                        , String.valueOf(document.getData().get("id"))
+                                        , String.valueOf(document.getData().get("school"))
+                                        , (boolean) document.getData().get("is driver")
+                                        ,String.valueOf(document.getData().get("phone"))
+                                        , String.valueOf(document.getData().get("Uid")));
+                                if(!users.uid.equals(mAuth.getUid())) {
+                                    driversList.add(users);
+                                }
                             }
 
 
@@ -419,11 +457,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         mMap.setMyLocationEnabled(true);
 
         // Add a marker in Sydney and move the camera
-
-
-
-
-// da el account bta3y ..ana customer wwenta el driver   astana 3awz a2olk 7aga astana hklmk oka aklmk phone ?
 
 
 

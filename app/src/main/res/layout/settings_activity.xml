@@ -36,13 +36,7 @@
 
     <androidx.appcompat.widget.SwitchCompat
         android:layout_width="match_parent"
-        android:text="I want to interact with users that have cars "
-        android:id="@+id/car"
-        android:layout_height="50dp"/>
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:layout_width="match_parent"
-        android:text="I want to interact with users that do not have a car"
+        android:text="I want to interact with all users"
         android:id="@+id/no_car"
         android:layout_height="50dp"/>
     <Button

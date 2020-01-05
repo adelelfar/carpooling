@@ -53,18 +53,19 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     String bdan;
 
     AlertDialog dialog;
-
+    List<Users> driversList=new ArrayList<>();
 
 
     List<Users> requesters=new ArrayList<>();
     boolean isRequest=false;
+    boolean see_all;
 
     Button req,cancel ;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     CollectionReference requestRef = db.collection("Requests");
     CollectionReference tripsRef = db.collection("Trips");
-
+    String country;
     private FusedLocationProviderClient client;
 
     @Override
@@ -78,7 +79,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
 
 
-        //RetrieveUser(mAuth.getUid());
+        RetrieveUser(mAuth.getUid());
         client= LocationServices.getFusedLocationProviderClient(this);
 
         /**/
@@ -121,15 +122,16 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
                                 String schoolId = (String) document.getData().get("school");
                                 String name = (String) document.getData().get("username");
                                 String phone = (String) document.getData().get("phone");
+                                see_all=(boolean) document.getData().get("access all");
                                 boolean isDriver = (boolean) document.getData().get("is driver");
 
-                                user = new Users(name, l, id, schoolId, false,phone,uid);
-                                progressBar.setVisibility(View.GONE);
+                                user = new Users(name, l, id, schoolId, isDriver,phone,uid);
+                                //progressBar.setVisibility(View.GONE);
                                 break;
 
                             }
                         }
-                        show_user_location();
+                        //show_user_location();
                     }
 
                 });
@@ -168,7 +170,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
                                                         String name = (String) document.getData().get("username");
                                                         String phone = (String) document.getData().get("phone");
                                                         boolean isDriver = (boolean) document.getData().get("is driver");
-
+                                                        country = (String) document.getData().get("country");
                                                         user = new Users(name, l, id, schoolId, false,phone,uid);
                                                         requesters.add(user);
                                                         if(counter==0)
@@ -351,7 +353,8 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
 
         RetrieveRequesters(mAuth.getUid());
-
+        if(see_all)
+            RetrieveAll();
 
 //        mMap.addMarker(new MarkerOptions().position( new LatLng(user.position.getLatitude(),user.position.getLongitude())).title("Marker in Sydney"));
         //      mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(user.position.getLatitude(),user.position.getLongitude())));
@@ -362,8 +365,52 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(user.position.getLatitude(),user.position.getLongitude())));
 
     }
+    public void RetrieveAll() {
+        // c.showLoading();
+        db.collection("Users").whereEqualTo("country",country)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+
+                                Users users = new Users(String.valueOf(document.getData().get("username"))
+                                        , ((GeoPoint) document.getData().get("location"))
+                                        , String.valueOf(document.getData().get("id"))
+                                        , String.valueOf(document.getData().get("school"))
+                                        , (boolean) document.getData().get("is driver")
+                                        ,String.valueOf(document.getData().get("phone"))
+                                        , String.valueOf(document.getData().get("Uid")));
+                                if(!users.uid.equals(mAuth.getUid())) {
+                                    driversList.add(users);
+                                }
+                            }
 
 
+
+                        }
+
+                        show_drivers_location();
+
+                    }
+                });
+
+    }
+
+
+    void show_drivers_location()
+    {
+        for (Users driver:driversList)
+        {
+
+            mMap.addMarker(new MarkerOptions().position( new LatLng(driver.position.getLatitude(),driver.position.getLongitude())).title(driver.name+","+driver.phone)).setTag(driver.uid);
+
+            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
+            mMap.setOnMarkerClickListener(this);
+        }
+    }
     void show_requesters_location()
     {
         for (Users requester:requesters)

@@ -43,7 +43,7 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 public class SettingsActivity extends AppCompatActivity {
     EditText school,phone,plate,home;
     Spinner yourcountrySpinnerobj;
-    SwitchCompat have_car,see_car,see_no_car;
+    SwitchCompat have_car,see_all;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     QueryDocumentSnapshot doc;
     ArrayAdapter<String> countryAdapter;
@@ -89,8 +89,7 @@ public class SettingsActivity extends AppCompatActivity {
         phone=findViewById(R.id.phone);
 
         have_car=findViewById(R.id.haveCar);
-        see_car=findViewById(R.id.car);
-        see_no_car=findViewById(R.id.no_car);
+        see_all=findViewById(R.id.no_car);
 
         retrieve(mAuth);
 
@@ -103,8 +102,7 @@ public class SettingsActivity extends AppCompatActivity {
         user.put("phone",phone.getText().toString());
         user.put("school",school.getText().toString());
         user.put("is driver",have_car.isChecked());
-        user.put("access drivers",see_car.isChecked());
-        user.put("access non-drivers",see_no_car.isChecked());
+        user.put("access all",see_all.isChecked());
         user.put("country",String.valueOf(yourcountrySpinnerobj.getSelectedItem()));
 
         addUser("Users",user);
@@ -123,8 +121,7 @@ public class SettingsActivity extends AppCompatActivity {
                     for (QueryDocumentSnapshot document : task.getResult()) {
                         doc=document;
                         have_car.setChecked((boolean) document.getData().get("is driver"));
-                        see_car.setChecked((boolean) document.getData().get("access drivers"));
-                        see_no_car.setChecked((boolean) document.getData().get("access non-drivers"));
+                        see_all.setChecked((boolean) document.getData().get("access all"));
                         //home.setText(String.valueOf(document.getData().get("location")));
                         school.setText(String.valueOf(document.getData().get("school")));
                         plate.setText(String.valueOf(document.getData().get("plate")));
