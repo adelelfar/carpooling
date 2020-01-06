@@ -1,6 +1,7 @@
 package com.example.carpool;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
@@ -8,9 +9,11 @@ import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,16 +33,24 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
@@ -51,6 +62,12 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     GeoPoint loc;
     Users user;
     String bdan;
+    String last;
+    LinearLayout requestlay;
+boolean fristtime=true;
+    Handler mHandler = new Handler();
+    Runnable runnable;
+    int mInterval = 10*1000; //Delay for 15 seconds.  One second = 1000 milliseconds.
 
     AlertDialog dialog;
     List<Users> driversList=new ArrayList<>();
@@ -61,7 +78,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     boolean see_all;
 
     Button req,cancel ;
-
+    TextView phoreq,userreq,locreq,requesteridd;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     CollectionReference requestRef = db.collection("Requests");
     CollectionReference tripsRef = db.collection("Trips");
@@ -74,12 +91,31 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
         setContentView(R.layout.activity_driver);
         progressBar=findViewById(R.id.progressBar);
+Button accreq=(Button)findViewById(R.id.Acceptreq);
+        Button rfreq=(Button)findViewById(R.id.refusereq);
+accreq.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        AcceptRequest(mAuth.getUid(),requesteridd.getText().toString(),"CA");
+        requestlay.setVisibility(View.GONE);
+
+    }
+});
+rfreq.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+        DeleteRequest(mAuth.getUid(),requesteridd.getText().toString());
+        requestlay.setVisibility(View.GONE);
+    }
+});
         mAuth = FirebaseAuth.getInstance();
         req=findViewById(R.id.button4);
 
-
-
-        RetrieveUser(mAuth.getUid());
+ phoreq=(TextView)findViewById(R.id.phoneclient);
+         userreq=(TextView)findViewById(R.id.nameclient);
+         locreq=(TextView)findViewById(R.id.locationclient);
+        requesteridd=(TextView)findViewById(R.id.clientid);
+        requestlay=(LinearLayout)findViewById(R.id.linearLayout);
         client= LocationServices.getFusedLocationProviderClient(this);
 
         /**/
@@ -88,6 +124,8 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
     }
 
 
@@ -100,7 +138,35 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+private void deteailsrequester(final String Uid)
+{
+     db.collection("Users")
+             .whereEqualTo("Uid",Uid)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+        @Override
+        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+            if (task.isSuccessful()) {
 
+                for (QueryDocumentSnapshot document : task.getResult()) {
+
+                    String phone = (String) document.getData().get("phone");
+                    String name = (String) document.getData().get("username");
+                    GeoPoint l =  ((GeoPoint) document.getData().get("location"));
+                 phoreq.setText(phone);
+                 userreq.setText(name);
+                 requesteridd.setText(Uid);
+                 locreq.setText((String.valueOf(l.getLatitude())));
+                    requestlay.setVisibility(View.VISIBLE);
+
+
+                }
+            }
+        }
+
+                });
+
+}
 
     public void RetrieveUser(String Uid)
     {
@@ -124,14 +190,19 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
                                 String phone = (String) document.getData().get("phone");
                                 see_all=(boolean) document.getData().get("access all");
                                 boolean isDriver = (boolean) document.getData().get("is driver");
-
+                                country=(String) document.getData().get("country");
                                 user = new Users(name, l, id, schoolId, isDriver,phone,uid);
                                 //progressBar.setVisibility(View.GONE);
                                 break;
 
                             }
                         }
+                        if(see_all)
+                            RetrieveAll();
+                        else
+                            RetrieveRequesters(mAuth.getUid());
                         //show_user_location();
+
                     }
 
                 });
@@ -170,18 +241,19 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
                                                         String name = (String) document.getData().get("username");
                                                         String phone = (String) document.getData().get("phone");
                                                         boolean isDriver = (boolean) document.getData().get("is driver");
-                                                        country = (String) document.getData().get("country");
                                                         user = new Users(name, l, id, schoolId, false,phone,uid);
                                                         requesters.add(user);
                                                         if(counter==0)
                                                         {
                                                             show_requesters_location();
+
                                                             break;
                                                         }
                                                         break;
 
                                                     }
                                                 }
+
                                             }
 
                                         });
@@ -228,6 +300,17 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         });
     }
 
+
+
+
+
+
+
+
+    public void listenToDocument() {
+
+
+    }
 
 
 
@@ -344,21 +427,95 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     }
 
 
+    boolean second=false;
+
+    DocumentChange dc;
+    void func()
+    {
+
+        Toast.makeText(driver.this,"hi",Toast.LENGTH_LONG).show();
+
+        db.collection("Requests")
+                .whereEqualTo("requestedId", mAuth.getUid())
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot snapshots,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            //     Log.w(TAG, "listen:error", e);
+                            return;
+                        }
+                        //   if(fristtime)
+                        {
+
+                            // fristtime=!fristtime;
+                        }
+                        if (snapshots.getDocumentChanges().size() <= 0) {
+                            return;
+                        }
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+
+                            switch (dc.getType()) {
+                                case ADDED:
+                                    deteailsrequester(dc.getDocument().get("requesterId").toString());
+                                    //   dc= snapshots.getDocumentChanges().remove(0);
+                                    //Toast.makeText(driver.this,"added "+dc.getDocument().get("requesterId").toString(),Toast.LENGTH_LONG).show();
+                                    break;
+                                case MODIFIED:
+                                    //   snapshots.getDocumentChanges().clear();
+                                    Toast.makeText(driver.this, "modifed " + dc.getDocument().getData().toString(), Toast.LENGTH_LONG).show();
+                                    break;
+                                case REMOVED:
+                                    //   snapshots.getDocumentChanges().clear();
+                                    requestlay.setVisibility(View.GONE);
+                                    Toast.makeText(driver.this, "removed " + dc.getDocument().getData().toString(), Toast.LENGTH_LONG).show();
+                                    break;
+                            }
+                        }
+                    }
+
+                });
+    }
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMyLocationEnabled(true);
 
-        // Add a marker in Sydney and move the camera
-
-
-        RetrieveRequesters(mAuth.getUid());
-        if(see_all)
-            RetrieveAll();
-
+        RetrieveUser(mAuth.getUid());
+        startRepeatingTask();
 //        mMap.addMarker(new MarkerOptions().position( new LatLng(user.position.getLatitude(),user.position.getLongitude())).title("Marker in Sydney"));
         //      mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(user.position.getLatitude(),user.position.getLongitude())));
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopRepeatingTask();
+    }
+
+    Runnable mStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                func();
+            } finally {
+                // 100% guarantee that this always happens, even if
+                // your update method throws an exception
+                mHandler.postDelayed(mStatusChecker, mInterval);
+            }
+        }
+    };
+
+    void startRepeatingTask() {
+        mStatusChecker.run();
+    }
+
+    void stopRepeatingTask() {
+        mHandler.removeCallbacks(mStatusChecker);
+    }
+
+
+
     void show_user_location()
     {
         //  mMap.addMarker(new MarkerOptions().position( new LatLng(user.position.getLatitude(),user.position.getLongitude())).title(user.name));
