@@ -77,17 +77,8 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.sign_in_button:
                         signIn();
 
-                        if(isDriver) {
 
-                            Intent i = new Intent(MainActivity.this, driver.class);
-                                 startActivity(i);
-                        }else {
-
-                            Intent i = new Intent(MainActivity.this, MapActivity.class);
-                               startActivity(i);
-                        }
-                        break;
-                    // ...
+                        // ...
                 }
             }
         });
@@ -238,6 +229,15 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                     });
+                    if(isDriver) {
+
+                        Intent i = new Intent(MainActivity.this, driver.class);
+                        startActivity(i);
+                    }else {
+
+                        Intent i = new Intent(MainActivity.this, MapActivity.class);
+                        startActivity(i);
+                    }
 
 
 

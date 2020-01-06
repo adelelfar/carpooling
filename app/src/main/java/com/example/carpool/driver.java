@@ -1,6 +1,7 @@
 package com.example.carpool;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
@@ -8,6 +9,7 @@ import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -30,16 +32,24 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
@@ -51,6 +61,11 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     GeoPoint loc;
     Users user;
     String bdan;
+
+
+    Handler mHandler = new Handler();
+    Runnable runnable;
+    int mInterval = 5*1000; //Delay for 15 seconds.  One second = 1000 milliseconds.
 
     AlertDialog dialog;
     List<Users> driversList=new ArrayList<>();
@@ -74,12 +89,12 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
         setContentView(R.layout.activity_driver);
         progressBar=findViewById(R.id.progressBar);
+
         mAuth = FirebaseAuth.getInstance();
         req=findViewById(R.id.button4);
 
 
 
-        RetrieveUser(mAuth.getUid());
         client= LocationServices.getFusedLocationProviderClient(this);
 
         /**/
@@ -88,6 +103,8 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
     }
 
 
@@ -124,14 +141,19 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
                                 String phone = (String) document.getData().get("phone");
                                 see_all=(boolean) document.getData().get("access all");
                                 boolean isDriver = (boolean) document.getData().get("is driver");
-
+                                country=(String) document.getData().get("country");
                                 user = new Users(name, l, id, schoolId, isDriver,phone,uid);
                                 //progressBar.setVisibility(View.GONE);
                                 break;
 
                             }
                         }
+                        if(see_all)
+                            RetrieveAll();
+                        else
+                            RetrieveRequesters(mAuth.getUid());
                         //show_user_location();
+
                     }
 
                 });
@@ -170,7 +192,6 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
                                                         String name = (String) document.getData().get("username");
                                                         String phone = (String) document.getData().get("phone");
                                                         boolean isDriver = (boolean) document.getData().get("is driver");
-                                                        country = (String) document.getData().get("country");
                                                         user = new Users(name, l, id, schoolId, false,phone,uid);
                                                         requesters.add(user);
                                                         if(counter==0)
@@ -182,6 +203,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
                                                     }
                                                 }
+
                                             }
 
                                         });
@@ -192,6 +214,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
                             }
                         }
+                       startRepeatingTask();
                     }
                 });
     }
@@ -228,6 +251,17 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         });
     }
 
+
+
+
+
+
+
+
+    public void listenToDocument() {
+
+
+    }
 
 
 
@@ -344,21 +378,79 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     }
 
 
+
+
+
+    void func()
+    {
+        db.collection("Requests")
+                .whereEqualTo("requestedId", mAuth.getUid())
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot snapshots,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Toast.makeText(driver.this,"error",Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            switch (dc.getType()) {
+                                case ADDED:
+                                    Toast.makeText(driver.this,"add",Toast.LENGTH_LONG).show();
+                                    break;
+                                case MODIFIED:
+                                    Toast.makeText(driver.this,"modif",Toast.LENGTH_LONG).show();
+                                    break;
+                                case REMOVED:
+                                    Toast.makeText(driver.this,"remve",Toast.LENGTH_LONG).show();
+                                    break;
+                            }
+                        }
+
+                    }
+                });
+    }
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMyLocationEnabled(true);
 
-        // Add a marker in Sydney and move the camera
-
-
-        RetrieveRequesters(mAuth.getUid());
-        if(see_all)
-            RetrieveAll();
+        RetrieveUser(mAuth.getUid());
 
 //        mMap.addMarker(new MarkerOptions().position( new LatLng(user.position.getLatitude(),user.position.getLongitude())).title("Marker in Sydney"));
         //      mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(user.position.getLatitude(),user.position.getLongitude())));
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopRepeatingTask();
+    }
+
+    Runnable mStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                func();
+            } finally {
+                // 100% guarantee that this always happens, even if
+                // your update method throws an exception
+                mHandler.postDelayed(mStatusChecker, mInterval);
+            }
+        }
+    };
+
+    void startRepeatingTask() {
+        mStatusChecker.run();
+    }
+
+    void stopRepeatingTask() {
+        mHandler.removeCallbacks(mStatusChecker);
+    }
+
+
+
     void show_user_location()
     {
         //  mMap.addMarker(new MarkerOptions().position( new LatLng(user.position.getLatitude(),user.position.getLongitude())).title(user.name));
@@ -393,7 +485,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
                         }
 
                         show_drivers_location();
-
+                        func();
                     }
                 });
 

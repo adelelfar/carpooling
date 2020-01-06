@@ -13,7 +13,7 @@
     <EditText
         android:id="@+id/plate"
         android:layout_width="wrap_content"
-        android:hint="plate number"
+        android:hint="plate numbers"
         android:layout_height="wrap_content"/>
 
     <EditText
