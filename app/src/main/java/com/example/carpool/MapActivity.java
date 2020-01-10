@@ -58,6 +58,8 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     GeoPoint loc;
     Users user;
     List<Users> driversList=new ArrayList<>();
+    List<Users> noncars=new ArrayList<>();
+
     String bdan;
     String country;
     AlertDialog dialog;
@@ -148,10 +150,11 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                             }
                         }
                         if(see_all)
-                        RetrieveAll();
+                            RetrieveDrivers();
+
                         else
-                            RetrieveAllDrivers();
-                     //   show_user_location();
+                            RetrieveNonDrivers();
+
                     }
 
                 });
@@ -160,9 +163,9 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
 
 
-    public void RetrieveAll() {
+    public void RetrieveNonDrivers() {
         // c.showLoading();
-        db.collection("Users").whereEqualTo("country",country)
+        db.collection("Users").whereEqualTo("country",country).whereEqualTo("is driver",false)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -179,25 +182,23 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                                         ,String.valueOf(document.getData().get("phone"))
                                         , String.valueOf(document.getData().get("Uid")));
                                 if(!users.uid.equals(mAuth.getUid())) {
-                                    driversList.add(users);
+                                    noncars.add(users);
                                 }
                             }
-
-
 
                         }
                         if(driversList.size()<=0)
                         {
-                            Toast.makeText(MapActivity.this,"No driver yet",Toast.LENGTH_LONG).show();
+                            Toast.makeText(MapActivity.this,"No non-cars yet",Toast.LENGTH_LONG).show();
                         }
-                        show_drivers_location();
+                        show_non_cars_location();
 
                     }
                 });
 
     }
 
-    public void RetrieveAllDrivers() {
+    public void RetrieveDrivers() {
         // c.showLoading();
         db.collection("Users").whereEqualTo("country",country).whereEqualTo("is driver",true)
                 .get()
@@ -432,17 +433,27 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         e.setText(infos[0]);
         TextView e1=(TextView) mview.findViewById(R.id.textView6);
         e1.setText(infos[1]);
-        bdan=(String)marker.getTag();
-        cancel=mview.findViewById(R.id.button6);
 
-        req=mview.findViewById(R.id.button4);
-        cancel.setVisibility(View.VISIBLE);
-        //Toast.makeText(this,bdan.id,Toast.LENGTH_LONG).show();
-        mbulder.setView(mview);
-        dialog=mbulder.create();
-        checkRequest(bdan,mAuth.getUid());
-        //dialog.show();
-        return false;
+        bdan=infos[2];
+        String car_or_not=(String)marker.getTag();
+            cancel = mview.findViewById(R.id.button6);
+
+            req = mview.findViewById(R.id.button4);
+            cancel.setVisibility(View.VISIBLE);
+
+            //Toast.makeText(this,bdan.id,Toast.LENGTH_LONG).show();
+            mbulder.setView(mview);
+            dialog = mbulder.create();
+        if(car_or_not=="non_car") {
+            req.setVisibility(View.GONE);
+            cancel.setVisibility(View.GONE);
+        }
+        else
+            checkRequest(bdan, mAuth.getUid());
+
+            //dialog.show();
+            return false;
+
     }
 
 
@@ -471,6 +482,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(user.position.getLatitude(),user.position.getLongitude())));
 
     }
+
     private void getroutetodriver(GeoPoint clientloc, GeoPoint captainloc) {
         double lat = clientloc.getLatitude();
         double lng = clientloc.getLongitude ();
@@ -492,7 +504,18 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         for (Users driver:driversList)
         {
 
-            mMap.addMarker(new MarkerOptions().position( new LatLng(driver.position.getLatitude(),driver.position.getLongitude())).title(driver.name+","+driver.phone)).setTag(driver.uid);
+            mMap.addMarker(new MarkerOptions().position( new LatLng(driver.position.getLatitude(),driver.position.getLongitude())).title(driver.name+","+driver.phone+","+driver.uid)).setTag("driver");
+
+            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
+            mMap.setOnMarkerClickListener(this);
+        }
+    }
+    void show_non_cars_location()
+    {
+        for (Users non_car:noncars)
+        {
+
+            mMap.addMarker(new MarkerOptions().position( new LatLng(non_car.position.getLatitude(),non_car.position.getLongitude())).title(non_car.name+","+non_car.phone+","+non_car.uid)).setTag("non-car");
 
             //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
             mMap.setOnMarkerClickListener(this);

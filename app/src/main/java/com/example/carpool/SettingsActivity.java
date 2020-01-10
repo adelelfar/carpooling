@@ -158,4 +158,4 @@ public class SettingsActivity extends AppCompatActivity {
     public void save_settings(View view) {
         addData();
     }
-}
+}   

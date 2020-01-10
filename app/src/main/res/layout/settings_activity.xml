@@ -35,10 +35,12 @@
         android:layout_height="wrap_content"/>
 
     <androidx.appcompat.widget.SwitchCompat
-        android:layout_width="match_parent"
-        android:text="I want to interact with all users"
         android:id="@+id/no_car"
-        android:layout_height="50dp"/>
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="see non-car people"
+        android:textOff="see non-car-people"
+        android:textOn="see car-people" />
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -102,7 +102,6 @@ public class MainActivity extends AppCompatActivity {
                 log(loginuser.getText().toString(),loginpass.getText().toString());
             }
         });
-
          */
         register.setOnClickListener(new View.OnClickListener() {
             @Override
