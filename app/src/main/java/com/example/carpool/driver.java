@@ -59,10 +59,8 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     private GoogleMap mMap;
     ProgressBar progressBar;
     private FirebaseAuth mAuth;
-    int counter;
     GeoPoint loc;
     Users user;
-    boolean isTrip;
     String bdan;
     String last;
     LinearLayout requestlay;
@@ -76,15 +74,12 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
 
     List<Users> requesters=new ArrayList<>();
-    List<Users> Trips=new ArrayList<>();
-
     boolean isRequest=false;
     boolean see_all;
 
     Button req,cancel ;
     TextView phoreq,userreq,locreq,requesteridd;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
-    List<Users> noncars=new ArrayList<>();
     CollectionReference requestRef = db.collection("Requests");
     CollectionReference tripsRef = db.collection("Trips");
     String country;
@@ -202,11 +197,10 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
                             }
                         }
-
                         if(see_all)
-                            RetrieveDrivers();
+                            RetrieveAll();
                         else
-                            RetrieveNonDrivers();
+                            RetrieveRequesters(mAuth.getUid());
                         //show_user_location();
 
                     }
@@ -215,66 +209,11 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
     }
 
-
-    public void RetrieveTrips()
+    int counter=0;
+    public void RetrieveRequesters(String requestedId)
     {
-        counter=0;
-        db.collection("Trips")
-                .whereEqualTo("CaptainId",mAuth.getUid())
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-
-                                String uid = (String) document.getData().get("ClientId");
-                                counter+=1;
-                                db.collection("Users")
-                                        .whereEqualTo("Uid",uid)
-                                        .get()
-                                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                            @Override
-                                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                                if (task.isSuccessful()) {
-                                                    for (QueryDocumentSnapshot document : task.getResult()) {
-                                                        counter-=1;
-                                                        String id = (String) document.getData().get("id");
-                                                        String uid = (String) document.getData().get("Uid");
-
-                                                        GeoPoint l =  ((GeoPoint) document.getData().get("location"));
-                                                        String schoolId = (String) document.getData().get("school");
-                                                        String name = (String) document.getData().get("username");
-                                                        String phone = (String) document.getData().get("phone");
-                                                        boolean isDriver = (boolean) document.getData().get("is driver");
-                                                        user = new Users(name, l, id, schoolId, false,phone,uid);
-                                                        Trips.add(user);
-                                                        if(counter==0)
-                                                        {
-                                                            show_Trips_location();
-
-                                                            break;
-                                                        }
-                                                        break;
-
-                                                    }
-                                                }
-
-                                            }
-
-                                        });
-
-                            }
-                        }
-                    }
-                });
-    }
-    public void RetrieveRequests()
-    {
-        counter=0;
         db.collection("Requests")
-                .whereEqualTo("requestedId",mAuth.getUid())
+                .whereEqualTo("requestedId",requestedId)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -325,7 +264,6 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
                             }
                         }
-
                     }
                 });
     }
@@ -360,38 +298,22 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
             }
 
         });
+    }
 
-        isTrip=false;
-        tripsRef.whereEqualTo("CaptainId", requestedId).whereEqualTo("ClientId", requesterId)
-                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
 
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        isRequest=true;
-                        break;
-                    }
 
-                }
-                if(isTrip)
-                {
-                    cancel.setVisibility(View.VISIBLE);
-                    req.setVisibility(View.GONE);
-                }
-                else
-                {
-                    req.setVisibility(View.GONE);
-                    cancel.setVisibility(View.GONE);
 
-                }
-                dialog.show();
-            }
 
-        });
+
+
+
+    public void listenToDocument() {
 
 
     }
+
+
+
 
 
 
@@ -491,7 +413,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         e.setText(infos[0]);
         TextView e1=(TextView) mview.findViewById(R.id.textView6);
         e1.setText(infos[1]);
-        String car_or_not=(String)marker.getTag();
+
         bdan=(String)marker.getTag();
         cancel=mview.findViewById(R.id.button6);
 
@@ -500,9 +422,6 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         //Toast.makeText(this,bdan.id,Toast.LENGTH_LONG).show();
         mbulder.setView(mview);
         dialog=mbulder.create();
-        req.setVisibility(View.GONE);
-        cancel.setVisibility(View.GONE);
-
         checkRequest(mAuth.getUid(),bdan);
         //dialog.show();
         return false;
@@ -596,9 +515,17 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         mHandler.removeCallbacks(mStatusChecker);
     }
 
-    public void RetrieveDrivers() {
+
+
+    void show_user_location()
+    {
+        //  mMap.addMarker(new MarkerOptions().position( new LatLng(user.position.getLatitude(),user.position.getLongitude())).title(user.name));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(user.position.getLatitude(),user.position.getLongitude())));
+
+    }
+    public void RetrieveAll() {
         // c.showLoading();
-        db.collection("Users").whereEqualTo("country",country).whereEqualTo("is driver",true)
+        db.collection("Users").whereEqualTo("country",country)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -622,10 +549,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
 
                         }
-                        if(driversList.size()<=0)
-                        {
-                            Toast.makeText(driver.this,"No driver yet",Toast.LENGTH_LONG).show();
-                        }
+
                         show_drivers_location();
 
                     }
@@ -633,51 +557,6 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
     }
 
-    public void RetrieveNonDrivers() {
-        // c.showLoading();
-        db.collection("Users").whereEqualTo("country",country).whereEqualTo("is driver",false)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-
-                        if (task.isSuccessful()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-
-                                Users users = new Users(String.valueOf(document.getData().get("username"))
-                                        , ((GeoPoint) document.getData().get("location"))
-                                        , String.valueOf(document.getData().get("id"))
-                                        , String.valueOf(document.getData().get("school"))
-                                        , (boolean) document.getData().get("is driver")
-                                        ,String.valueOf(document.getData().get("phone"))
-                                        , String.valueOf(document.getData().get("Uid")));
-                                if(!users.uid.equals(mAuth.getUid())) {
-                                    noncars.add(users);
-                                }
-                            }
-
-                        }
-                        if(driversList.size()<=0)
-                        {
-                            Toast.makeText(driver.this,"No non-cars yet",Toast.LENGTH_LONG).show();
-                        }
-                        show_non_cars_location();
-
-                    }
-                });
-
-    }
-    void show_non_cars_location()
-    {
-        for (Users non_car:noncars)
-        {
-
-            mMap.addMarker(new MarkerOptions().position( new LatLng(non_car.position.getLatitude(),non_car.position.getLongitude())).title(non_car.name+","+non_car.phone+","+non_car.uid)).setTag("non-car");
-
-            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
-            mMap.setOnMarkerClickListener(this);
-        }
-    }
 
     void show_drivers_location()
     {
@@ -685,18 +564,6 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         {
 
             mMap.addMarker(new MarkerOptions().position( new LatLng(driver.position.getLatitude(),driver.position.getLongitude())).title(driver.name+","+driver.phone)).setTag(driver.uid);
-
-            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
-            mMap.setOnMarkerClickListener(this);
-        }
-    }
-
-    void show_Trips_location()
-    {
-        for (Users trip:Trips)
-        {
-
-            mMap.addMarker(new MarkerOptions().position( new LatLng(trip.position.getLatitude(),trip.position.getLongitude())).title(trip.name+","+trip.phone+" school")).setTag(trip.uid);
 
             //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
             mMap.setOnMarkerClickListener(this);
