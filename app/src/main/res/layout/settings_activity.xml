@@ -38,9 +38,8 @@
         android:id="@+id/no_car"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:text="see non-car people"
-        android:textOff="see non-car-people"
-        android:textOn="see car-people" />
+        android:text="see all users "
+ />
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

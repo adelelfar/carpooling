@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     tools:context=".MapActivity">
 
-    <fragment xmlns:map="http://schemas.android.com/apk/res-auto"
+    <fragment
         android:id="@+id/map"
         class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="0dp"
@@ -13,56 +13,114 @@
         android:layout_weight="1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1.0" />
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="409dp"
-        android:layout_height="wrap_content"
-        android:background="@color/quantum_white_text"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="@+id/map"
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@mipmap/ic_seeting"
+        android:onClick="setting"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.978"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/map"
-        app:layout_constraintVertical_bias="0.968"
-        android:visibility="gone">
+        app:layout_constraintVertical_bias="0.114" />
 
+    <com.jcminarro.roundkornerlayout.RoundKornerRelativeLayout
+        android:id="@+id/roundKornerRelativeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="7dp"
+        android:layout_marginRight="7dp"
+        android:layout_marginTop="364dp"
+        app:corner_radius="29dp"
+        android:visibility="gone"
+        android:background="@color/colorWhite"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/map"
+        app:layout_constraintVertical_bias="1.0"
+        tools:layout_editor_absoluteX="42dp">
+<RelativeLayout
+    android:id="@+id/layshow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/background"
+    >
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/profile_image"
+        android:layout_width="88dp"
+        android:layout_height="69dp"
+        android:layout_marginLeft="130dp"
+
+        android:src="@drawable/carimage"
+        app:civ_border_color="#FF000000"
+        app:civ_border_width="5dp"
+        tools:layout_editor_absoluteX="131dp"
+        tools:layout_editor_absoluteY="320dp" />
+</RelativeLayout>
         <TextView
+            android:id="@+id/nameclient1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/layshow"
             android:text="name :"
-            android:textSize="30sp"
+            android:textSize="20sp"
+            android:textColor="@color/colorRose"
+
+            android:layout_marginStart="9dp"
             android:textStyle="bold|italic" />
 
         <TextView
             android:id="@+id/nameclient"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+android:textColor="@color/colorDark"
+            android:layout_below="@+id/nameclient1"
+            android:layout_alignParentStart="true"
+            android:textStyle="bold"
+            android:layout_marginStart="90dp"
             android:layout_marginLeft="90dp" />
 
         <TextView
+            android:id="@+id/locationclient1"
+
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Location :"
-            android:textSize="30sp"
-            android:textStyle="bold|italic" />
+            android:layout_below="@+id/nameclient1"
+            android:layout_marginTop="39dp"
+            android:textColor="@color/colorRose"
 
+            android:text="Location :"
+            android:textSize="20sp"
+            android:layout_marginStart="9dp"
+
+            android:textStyle="bold|italic" />
         <TextView
             android:id="@+id/locationclient"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="120dp" />
+            android:textColor="@color/colorDark"
+            android:textStyle="bold"
+            android:layout_marginLeft="120dp"
+            android:layout_below="@+id/locationclient1"
+            />
 
         <TextView
+            android:id="@+id/phoneclient1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="phone :"
-            android:textSize="30sp"
+            android:textColor="@color/colorRose"
+
+            android:layout_below="@+id/locationclient"
+            android:textSize="20sp"
+            android:layout_marginStart="9dp"
             android:textStyle="bold|italic" />
         <TextView
             android:id="@+id/clientid"
@@ -74,26 +132,43 @@
             android:id="@+id/phoneclient"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="100dp" />
-
+            android:layout_marginLeft="100dp"
+            android:textColor="@color/colorDark"
+            android:textStyle="bold"
+            android:layout_below="@+id/phoneclient1"
+            />
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/phoneclient"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="7dp"
+            android:layout_marginBottom="10dp"
+
+            >
 
 
             <Button
                 android:id="@+id/Acceptreq"
-                android:layout_width="200dp"
+                android:layout_width="150dp"
+                android:background="@drawable/buttondetails"
+                android:textColor="@color/colorRose"
                 android:layout_height="wrap_content"
                 android:text="Accept" />
 
             <Button
                 android:id="@+id/refusereq"
-                android:layout_width="200dp"
+                android:textColor="@color/colorRose"
+                android:layout_width="150dp"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/buttondetails"
                 android:layout_height="wrap_content"
                 android:text="refuse" />
         </LinearLayout>
-    </LinearLayout>
+
+
+
+    </com.jcminarro.roundkornerlayout.RoundKornerRelativeLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

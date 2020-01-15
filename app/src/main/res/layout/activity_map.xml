@@ -11,6 +11,11 @@
         android:layout_weight="1"
         android:scrollbars="vertical"
         class="com.google.android.gms.maps.SupportMapFragment"/>
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@mipmap/ic_seeting"
+        android:onClick="setting" />
 
     <ProgressBar
         android:id="@+id/progressBar"

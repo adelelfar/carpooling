@@ -46,5 +46,13 @@ dependencies {
 
     implementation 'com.github.jd-alexander:library:1.1.0'
 
+    implementation "com.mikepenz:iconics-core:2.9.0@aar"
+    implementation 'com.mikepenz:fontawesome-typeface:+@aar'
+    //implementation "com.mikepenz:iconics-views:2.9.5"
+    implementation 'com.mikepenz:iconics-views:2.9.0@aar'
+    implementation 'de.hdodenhof:circleimageview:3.0.1'
+    implementation 'com.jcminarro:RoundKornerLayouts:0.4.0'
+
+
 }
 apply plugin: 'com.google.gms.google-services'

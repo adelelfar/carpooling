@@ -65,8 +65,18 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        Button btn_login=findViewById(R.id.sign_in_button);
+        btn_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                signIn();
+            }
+        });
+        requestPermission();
+        client= LocationServices.getFusedLocationProviderClient(this);
 
 
+/*
         SignInButton signInButton = findViewById(R.id.sign_in_button);
         signInButton.setSize(SignInButton.SIZE_STANDARD);
 
@@ -86,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         requestPermission();
         client= LocationServices.getFusedLocationProviderClient(this);
 
-
+*/
         login=findViewById(R.id.button);
 
         loginuser=findViewById(R.id.loginuser);
@@ -120,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
-        if (requestCode == 1) {
+        if (requestCode ==1) {
             // The Task returned from this call is always completed, no need to attach
             // a listener.
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
@@ -134,11 +144,12 @@ public class MainActivity extends AppCompatActivity {
             GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(getApplication());
 
             if (acct != null) {
-
+                progressBar.setVisibility(View.INVISIBLE);
                 log(acct.getEmail(),acct.getId());
             }
             // Signed in successfully, show authenticated UI.
         } catch (ApiException e) {
+            progressBar.setVisibility(View.INVISIBLE);
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
             Log.w("2", "signInResult:failed code=" + e.getStatusCode());
@@ -156,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void signIn() {
+        progressBar.setVisibility(View.VISIBLE);
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, 1);
 

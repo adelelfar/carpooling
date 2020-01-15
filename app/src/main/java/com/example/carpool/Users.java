@@ -10,7 +10,7 @@ public class Users {
     String phone;
     Boolean haveCar;
     String uid;
-
+    boolean check;
     public Users(String name,GeoPoint position,String nationalId,String schoolId,Boolean haveCar,String pho,String uid)
     {
         this.name=name;

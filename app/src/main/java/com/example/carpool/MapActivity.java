@@ -5,6 +5,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -58,19 +59,21 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     GeoPoint loc;
     Users user;
     List<Users> driversList=new ArrayList<>();
-    List<Users> noncars=new ArrayList<>();
+    List<Users> trips=new ArrayList<>();
+
+    Map<String, String>  user_map = new HashMap<>();
 
     String bdan;
+
     String country;
     AlertDialog dialog;
     boolean see_all;
 
     List<Users> customersList=new ArrayList<>();
 
-    List<Users> requesters=new ArrayList<>();
+    List<Users> requests=new ArrayList<>();
     boolean isRequest=false;
 
-    List<Users> requesteds=new ArrayList<>();
 
     Button req,cancel ;
 
@@ -94,9 +97,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         mAuth = FirebaseAuth.getInstance();
         req=findViewById(R.id.button4);
 
-
-
-        //RetrieveUser(mAuth.getUid());
         client= LocationServices.getFusedLocationProviderClient(this);
 
         /**/
@@ -117,12 +117,172 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+    int counter=0;
+    public void RetrieveRequests()
+    {
+        db.collection("Requests")
+                .whereEqualTo("requesterId",mAuth.getUid())
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+
+                                String uid = (String) document.getData().get("requestedId");
+                                counter+=1;
+                                db.collection("Users")
+                                        .whereEqualTo("Uid",uid)
+                                        .get()
+                                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                                if (task.isSuccessful()) {
+                                                    for (QueryDocumentSnapshot document : task.getResult()) {
+                                                        counter-=1;
+                                                        String id = (String) document.getData().get("id");
+                                                        String uid = (String) document.getData().get("Uid");
+                                                        GeoPoint l =  ((GeoPoint) document.getData().get("location"));
+                                                        String schoolId = (String) document.getData().get("school");
+                                                        String name = (String) document.getData().get("username");
+                                                        String phone = (String) document.getData().get("phone");
+                                                        boolean isDriver = (boolean) document.getData().get("is driver");
+                                                        user = new Users(name, l, id, schoolId, isDriver,phone,uid);
+                                                        user_map.put(uid,"request");
+                                                        requests.add(user);
+                                                        if(counter==0)
+                                                        {
+                                                            RetrieveTrips();
+                                                            //   show_requests_location();
+                                                            break;
+
+                                                        }
+                                                        break;
+
+                                                    }
+                                                }
+
+                                            }
+
+                                        });
 
 
-    public void RetrieveUser(String Uid)
+                                //Toast.makeText(context, document.getData().get("requester"),Toast.LENGTH_LONG).show();
+
+                            }
+                            if(counter==0)
+                            {
+                                RetrieveTrips();
+                            }
+                        }
+                    }
+                });
+    }
+
+
+    public void RetrieveAll() {
+        // c.showLoading();
+        db.collection("Users").whereEqualTo("country",country)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+
+                                Users users = new Users(String.valueOf(document.getData().get("username"))
+                                        , ((GeoPoint) document.getData().get("location"))
+                                        , String.valueOf(document.getData().get("id"))
+                                        , String.valueOf(document.getData().get("school"))
+                                        , (boolean) document.getData().get("is driver")
+                                        ,String.valueOf(document.getData().get("phone"))
+                                        , String.valueOf(document.getData().get("Uid")));
+                              //  user_map.put(user.uid,"all");
+                                if(!users.uid.equals(mAuth.getUid())) {
+                                    driversList.add(users);
+                                }
+                            }
+                            show_all_location();
+
+
+                        }
+
+                    }
+                });
+
+    }
+
+
+    public void RetrieveTrips()
+    {
+        db.collection("Trips")
+                .whereEqualTo("ClientId",mAuth.getUid())
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+
+                                String uid = (String) document.getData().get("CaptainId");
+                                counter += 1;
+                                db.collection("Users")
+                                        .whereEqualTo("Uid", uid)
+                                        .get()
+                                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                                if (task.isSuccessful()) {
+                                                    for (QueryDocumentSnapshot document : task.getResult()) {
+                                                        counter -= 1;
+                                                        String id = (String) document.getData().get("id");
+                                                        String uid = (String) document.getData().get("Uid");
+
+                                                        GeoPoint l = ((GeoPoint) document.getData().get("location"));
+                                                        String schoolId = (String) document.getData().get("school");
+                                                        String name = (String) document.getData().get("username");
+                                                        String phone = (String) document.getData().get("phone");
+                                                        boolean isDriver = (boolean) document.getData().get("is driver");
+                                                        user = new Users(name, l, id, schoolId, isDriver, phone, uid);
+                                                        user_map.put(uid, "trip");
+                                                        trips.add(user);
+                                                        if (counter == 0) {
+                                                            //   show_trips_location();
+                                                            RetrieveAll();
+                                                            break;
+                                                        }
+                                                        break;
+
+                                                    }
+                                                }
+
+                                            }
+
+                                        });
+
+                            }
+                                //Toast.makeText(context, document.getData().get("requester"),Toast.LENGTH_LONG).show();
+                                if(counter==0)
+                                {
+                                    RetrieveAll();
+                                }
+
+                        }
+
+                    }
+                });
+    }
+
+
+
+
+    public void RetrieveUser()
     {
         db.collection("Users")
-                .whereEqualTo("Uid",Uid)
+                .whereEqualTo("Uid",mAuth.getUid())
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -139,7 +299,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                                 String schoolId = (String) document.getData().get("school");
                                 String name = (String) document.getData().get("username");
                                 String phone = (String) document.getData().get("phone");
-                                see_all = (boolean)document.getData().get("access all");
+                            //    see_all = (boolean)document.getData().get("access all");
                                 boolean isDriver = (boolean) document.getData().get("is driver");
                                 country= (String) document.getData().get("country");
 
@@ -149,127 +309,14 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
                             }
                         }
-                        if(see_all)
-                            RetrieveDrivers();
+                        RetrieveRequests();
 
-                        else
-                            RetrieveNonDrivers();
 
                     }
 
                 });
 
     }
-
-
-
-    public void RetrieveNonDrivers() {
-        // c.showLoading();
-        db.collection("Users").whereEqualTo("country",country).whereEqualTo("is driver",false)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-
-                        if (task.isSuccessful()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-
-                                Users users = new Users(String.valueOf(document.getData().get("username"))
-                                        , ((GeoPoint) document.getData().get("location"))
-                                        , String.valueOf(document.getData().get("id"))
-                                        , String.valueOf(document.getData().get("school"))
-                                        , (boolean) document.getData().get("is driver")
-                                        ,String.valueOf(document.getData().get("phone"))
-                                        , String.valueOf(document.getData().get("Uid")));
-                                if(!users.uid.equals(mAuth.getUid())) {
-                                    noncars.add(users);
-                                }
-                            }
-
-                        }
-                        if(driversList.size()<=0)
-                        {
-                            Toast.makeText(MapActivity.this,"No non-cars yet",Toast.LENGTH_LONG).show();
-                        }
-                        show_non_cars_location();
-
-                    }
-                });
-
-    }
-
-    public void RetrieveDrivers() {
-        // c.showLoading();
-        db.collection("Users").whereEqualTo("country",country).whereEqualTo("is driver",true)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-
-                        if (task.isSuccessful()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-
-                                Users users = new Users(String.valueOf(document.getData().get("username"))
-                                        , ((GeoPoint) document.getData().get("location"))
-                                        , String.valueOf(document.getData().get("id"))
-                                        , String.valueOf(document.getData().get("school"))
-                                        , (boolean) document.getData().get("is driver")
-                                        ,String.valueOf(document.getData().get("phone"))
-                                        , String.valueOf(document.getData().get("Uid")));
-                                if(!users.uid.equals(mAuth.getUid())) {
-                                    driversList.add(users);
-                                }
-                            }
-
-
-
-                        }
-                        if(driversList.size()<=0)
-                        {
-                            Toast.makeText(MapActivity.this,"No driver yet",Toast.LENGTH_LONG).show();
-                        }
-                        show_drivers_location();
-
-                    }
-                });
-
-    }
-
-
-
-    public void checkRequest(String requestedId,String requesterId)
-    {
-        isRequest=false;
-        requestRef.whereEqualTo("requestedId", requestedId).whereEqualTo("requesterId", requesterId)
-                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        isRequest=true;
-                        break;
-                    }
-
-                }
-                if(isRequest)
-                {
-                    cancel.setVisibility(View.VISIBLE);
-                    req.setVisibility(View.GONE);
-                }
-                else
-                {
-                    req.setVisibility(View.VISIBLE);
-                    cancel.setVisibility(View.GONE);
-
-                }
-                dialog.show();
-            }
-
-        });
-    }
-
-
 
 
     public void SendRequest(String requestedId, String requesterId,String schoolId) {
@@ -299,90 +346,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
 
 
-    public void AcceptRequest(Users requested,Users requester) {
-        Map<String, Object> trip = new HashMap<>();
-
-        trip.put("requestedNationalId", requested.nationalId);
-        trip.put("requestedId", requested.uid);
-        trip.put("requestedName", requested.name);
-        trip.put("requestedLocation", requested.position);
-
-
-        trip.put("requesterId", requester.uid);
-        trip.put("requesterNationalId", requester.nationalId);
-        trip.put("requesterName", requester.name);
-        trip.put("requesterLocation", requester.position);
-        trip.put("requesterSchoolId", requester.schoolId);
-
-
-
-        tripsRef.document().set(trip, SetOptions.merge())
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("W", "DocumentSnapshot successfully written!");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("E", "Error writing document", e);
-                    }
-                });
-
-
-
-
-        requestRef.whereEqualTo("requestedId", requested.uid).whereEqualTo("requesterId", requester.uid)
-                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        requestRef.document(document.getId()).delete();
-                    }
-
-
-                }
-
-            }
-
-        });
-
-
-    }
-    //yasta enta hna ?
-    // msh sha3'ala :'( :' ana gyt  wrini tab  ndatha azay
-
-    //RetrieveTripsForCustomer deh bos 3laha a7na kna 3mlnha swa deh nnyl eh b2a ana 7tat feha deh bas
-    //hadef data be edy fel server ba3den negrb
-    //ne call el function awel ma yefta7 bas ek moshkla en mafesh requests el data etmasa7t
-//tab mt3mlha mn 3ndk b2a w ab2a oli a3bal md5ol al 7mam
-    public void RetrieveTripsForCustomer(final String requesterId)
-    {
-
-        tripsRef.whereEqualTo("ClientId",requesterId).get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-
-                        if (task.isSuccessful()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                GeoPoint clientloc= (GeoPoint) document.getData().get("ClientLoc");
-                                GeoPoint captainloc= (GeoPoint) document.getData().get("captainLoc");
-                                String requestedid = (String) document.getData().get("CaptainId");
-                                getroutetodriver(clientloc,captainloc);
-                                break;
-
-                            }
-                        }
-
-                    }
-                });
-
-    }
-
 
     public void DeleteRequest(String requestedId,String requesterId) {
 
@@ -393,7 +356,23 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
                 if (task.isSuccessful()) {
                     for (QueryDocumentSnapshot document : task.getResult()) {
+
                         requestRef.document(document.getId()).delete();
+                    }
+
+
+                }
+            }
+
+        });
+        tripsRef.whereEqualTo("CaptainId", requestedId).whereEqualTo("ClientId", requesterId)
+                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        tripsRef.document(document.getId()).delete();
                     }
 
 
@@ -411,12 +390,20 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     public void MakeRequest(View view) {
         SendRequest(bdan,mAuth.getUid(),"FF");
         dialog.hide();
+        mMap.clear();
+        RetrieveUser();
 
     }
     public void CancelRequest(View view) {
         ereaspolilines();
         DeleteRequest(bdan,mAuth.getUid());
         dialog.hide();
+        mMap.clear();
+        user_map.remove(bdan);
+        requests.clear();
+        trips.clear();
+        driversList.clear();
+        RetrieveUser();
 
     }
 
@@ -433,37 +420,55 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         e.setText(infos[0]);
         TextView e1=(TextView) mview.findViewById(R.id.textView6);
         e1.setText(infos[1]);
+        String type=(String) marker.getTag();
+        bdan=(String)infos[2];
 
-        bdan=infos[2];
-        String car_or_not=(String)marker.getTag();
-            cancel = mview.findViewById(R.id.button6);
+        boolean have_car=(Boolean.parseBoolean(infos[3]));
+        cancel=mview.findViewById(R.id.button6);
 
-            req = mview.findViewById(R.id.button4);
+        req=mview.findViewById(R.id.button4);
+        cancel.setVisibility(View.VISIBLE);
+        //Toast.makeText(this,bdan.id,Toast.LENGTH_LONG).show();
+        mbulder.setView(mview);
+        dialog=mbulder.create();
+
+        if(type=="trip")
+        {
             cancel.setVisibility(View.VISIBLE);
+            cancel.setText("cancel trip");
+            req.setVisibility(View.GONE);
 
-            //Toast.makeText(this,bdan.id,Toast.LENGTH_LONG).show();
-            mbulder.setView(mview);
-            dialog = mbulder.create();
-        if(car_or_not=="non_car") {
+        }
+        else if(type=="request")
+        {
+            cancel.setVisibility(View.VISIBLE);
+            req.setVisibility(View.GONE);
+            cancel.setText("cancel request");
+        }
+       else if(type=="all")
+        {
+            req.setVisibility(View.VISIBLE);
+            cancel.setVisibility(View.GONE);
+
+        }
+        if(!have_car)
+        {
             req.setVisibility(View.GONE);
             cancel.setVisibility(View.GONE);
         }
-        else
-            checkRequest(bdan, mAuth.getUid());
-
-            //dialog.show();
-            return false;
-
+      //  Toast.makeText(MapActivity.this,type,Toast.LENGTH_SHORT).show();
+        //checkRequest(mAuth.getUid(),bdan);
+        dialog.show();
+        return false;
     }
 
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        RetrieveUser(mAuth.getUid());
+        RetrieveUser();
 
-        //RetrieveAll();
-        RetrieveTripsForCustomer(mAuth.getUid());
+
 
         mMap.setMyLocationEnabled(true);
 
@@ -483,6 +488,45 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
     }
 
+    void show_all_location()
+    {
+       // mMap.clear();
+
+        for (Users request:requests)
+        {
+            mMap.addMarker(new MarkerOptions().position( new LatLng(request.position.getLatitude(),request.position.getLongitude())).title(request.name+","+request.phone+" school requestttt"+","+request.uid+","+request.haveCar)).setTag("request");
+
+            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
+            mMap.setOnMarkerClickListener(this);
+        }
+        for (Users trip:trips)
+        {
+            mMap.addMarker(new MarkerOptions().position( new LatLng(trip.position.getLatitude(),trip.position.getLongitude())).title(trip.name+","+trip.phone+" school tripppp"+","+trip.uid+","+trip.haveCar)).setTag("trip");
+
+            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
+            mMap.setOnMarkerClickListener(this);
+        }
+        for (Users driver:driversList)
+        {
+            if(!user_map.containsKey(driver.uid)) {
+                mMap.addMarker(new MarkerOptions().position(new LatLng(driver.position.getLatitude(), driver.position.getLongitude())).title(driver.name + "," + driver.phone + "," + driver.uid + "," + driver.haveCar)).setTag("all");
+
+                //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
+                mMap.setOnMarkerClickListener(this);
+            }
+
+        }
+    }
+    void show_requests_location()
+    {
+       // mMap.clear();
+
+    }
+    void show_trips_location()
+    {
+       // mMap.clear();
+
+    }
     private void getroutetodriver(GeoPoint clientloc, GeoPoint captainloc) {
         double lat = clientloc.getLatitude();
         double lng = clientloc.getLongitude ();
@@ -499,28 +543,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         routing.execute();
     }
 
-    void show_drivers_location()
-    {
-        for (Users driver:driversList)
-        {
 
-            mMap.addMarker(new MarkerOptions().position( new LatLng(driver.position.getLatitude(),driver.position.getLongitude())).title(driver.name+","+driver.phone+","+driver.uid)).setTag("driver");
-
-            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
-            mMap.setOnMarkerClickListener(this);
-        }
-    }
-    void show_non_cars_location()
-    {
-        for (Users non_car:noncars)
-        {
-
-            mMap.addMarker(new MarkerOptions().position( new LatLng(non_car.position.getLatitude(),non_car.position.getLongitude())).title(non_car.name+","+non_car.phone+","+non_car.uid)).setTag("non-car");
-
-            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
-            mMap.setOnMarkerClickListener(this);
-        }
-    }
 
     @Override
     public void onRoutingFailure(RouteException e) {
@@ -574,5 +597,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             polyline.remove();
         }
         polylines.clear();
+    }
+
+
+    public void setting(View view) {
+        Intent i = new Intent(MapActivity.this, SettingsActivity.class);
+        i.putExtra("mAuth", mAuth.getUid());
+        startActivity(i);
     }
 }
