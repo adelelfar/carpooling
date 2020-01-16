@@ -225,7 +225,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
 
-        android:text="phone number"
+        android:text="school"
         android:textColor="#18bcaa"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -248,7 +248,7 @@
         android:layout_marginEnd="8dp"
         android:drawableLeft="@drawable/ic_action_user"
         android:ems="10"
-        android:hint="phone number"
+        android:hint="school name"
         android:inputType="textPersonName"
         android:textSize="16dp"
         app:layout_constraintEnd_toEndOf="parent"

@@ -54,6 +54,7 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnMarkerClickListener, RoutingListener {
 
     private GoogleMap mMap;
+    int zoom =10;
     ProgressBar progressBar;
     private FirebaseAuth mAuth;
     GeoPoint loc;
@@ -67,12 +68,8 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
     String country;
     AlertDialog dialog;
-    boolean see_all;
-
-    List<Users> customersList=new ArrayList<>();
 
     List<Users> requests=new ArrayList<>();
-    boolean isRequest=false;
 
 
     Button req,cancel ;
@@ -305,6 +302,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
                                 user = new Users(name, l, id, schoolId, false,phone,uid);
                                 progressBar.setVisibility(View.GONE);
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(user.position.getLatitude(),user.position.getLongitude() ),zoom ));
                                 break;
 
                             }
@@ -411,6 +409,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
     @Override
     public boolean onMarkerClick(Marker marker) {
+
         AlertDialog.Builder mbulder=new AlertDialog.Builder(MapActivity.this);
         View mview=getLayoutInflater().inflate(R.layout.driverinfo,null);
         String info=marker.getTitle();
@@ -469,7 +468,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         RetrieveUser();
 
 
-
         mMap.setMyLocationEnabled(true);
 
         // Add a marker in Sydney and move the camera
@@ -503,7 +501,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         {
             mMap.addMarker(new MarkerOptions().position( new LatLng(trip.position.getLatitude(),trip.position.getLongitude())).title(trip.name+","+trip.phone+" school tripppp"+","+trip.uid+","+trip.haveCar)).setTag("trip");
 
-            //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
             mMap.setOnMarkerClickListener(this);
         }
         for (Users driver:driversList)
@@ -511,7 +508,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             if(!user_map.containsKey(driver.uid)) {
                 mMap.addMarker(new MarkerOptions().position(new LatLng(driver.position.getLatitude(), driver.position.getLongitude())).title(driver.name + "," + driver.phone + "," + driver.uid + "," + driver.haveCar)).setTag("all");
 
-                //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
                 mMap.setOnMarkerClickListener(this);
             }
 
@@ -585,7 +581,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             Toast.makeText(getApplicationContext(),"Route "+ (i+1) +": distance - "+ route.get(i).getDistanceValue()+": duration - "+ route.get(i).getDurationValue(),Toast.LENGTH_SHORT).show();
         }
     }
-    //ana 5last bas run ma mbnadish  3l fun asln bos
     @Override
     public void onRoutingCancelled() {
 

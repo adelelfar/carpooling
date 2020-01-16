@@ -319,7 +319,7 @@ public class registerActivity extends AppCompatActivity {
 
 
                             // Sign in success, update UI with the signed-in user's information
-                            addData(email, nid.getText().toString(),mAuth.getUid(), pho.getText().toString(), loc, "AAa", x);
+                            addData(email, nid.getText().toString(),mAuth.getUid(), pho.getText().toString(), loc, nid.getText().toString(), x);
                             retive(mAuth.getUid());
 
                         } else {
