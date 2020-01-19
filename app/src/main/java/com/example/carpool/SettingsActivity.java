@@ -89,7 +89,6 @@ public class SettingsActivity extends AppCompatActivity {
         phone=findViewById(R.id.phone);
 
         have_car=findViewById(R.id.haveCar);
-        see_all=findViewById(R.id.no_car);
 
 
         retrieve(mAuth);
@@ -103,7 +102,6 @@ public class SettingsActivity extends AppCompatActivity {
         user.put("phone",phone.getText().toString());
         user.put("school",school.getText().toString());
         user.put("is driver",have_car.isChecked());
-       // user.put("access all",see_all.isChecked());
         user.put("country",String.valueOf(yourcountrySpinnerobj.getSelectedItem()));
 
         addUser("Users",user);
@@ -122,7 +120,6 @@ public class SettingsActivity extends AppCompatActivity {
                     for (QueryDocumentSnapshot document : task.getResult()) {
                         doc=document;
                         have_car.setChecked((boolean) document.getData().get("is driver"));
-                        //see_all.setChecked((boolean) document.getData().get("access all"));
                         //home.setText(String.valueOf(document.getData().get("location")));
                         school.setText(String.valueOf(document.getData().get("school")));
                         plate.setText(String.valueOf(document.getData().get("plate")));
@@ -166,5 +163,6 @@ public class SettingsActivity extends AppCompatActivity {
              i = new Intent(SettingsActivity.this, MapActivity.class);
         }
         startActivity(i);
+        finish();
     }
 }   

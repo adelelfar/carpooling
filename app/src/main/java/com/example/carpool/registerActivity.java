@@ -267,7 +267,7 @@ public class registerActivity extends AppCompatActivity {
             GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(getApplication());
 
             if (acct != null) {
-                savedata(acct.getEmail(),acct.getId());
+                savedata(acct);
             }
             // Signed in successfully, show authenticated UI.
         } catch (ApiException e) {
@@ -300,18 +300,23 @@ public class registerActivity extends AppCompatActivity {
                 if(!isDriver) {
                     Intent i = new Intent(registerActivity.this, MapActivity.class);
                     startActivity(i);
+                    finish();
+
                 }else {
 
                     Intent i = new Intent(registerActivity.this, driver.class);
-                    startActivity(i);            }
+                    startActivity(i);
+                    finish();
+
+                }
 
             }
         });
     }
 
-    private void savedata(final String email, final String password)
+    private void savedata(final GoogleSignInAccount acct)
     {
-        mAuth.createUserWithEmailAndPassword(email, password)
+        mAuth.createUserWithEmailAndPassword(acct.getEmail(), acct.getId())
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
@@ -319,12 +324,12 @@ public class registerActivity extends AppCompatActivity {
 
 
                             // Sign in success, update UI with the signed-in user's information
-                            addData(email, nid.getText().toString(),mAuth.getUid(), pho.getText().toString(), loc, nid.getText().toString(), x);
+                            addData(acct.getDisplayName(), nid.getText().toString(),mAuth.getUid(), pho.getText().toString(), loc, nid.getText().toString(), x);
                             retive(mAuth.getUid());
 
                         } else {
-                            retive(mAuth.getUid());
-                            Toast.makeText(registerActivity.this, "you already have an accout , you will instead login", Toast.LENGTH_LONG).show();
+                           // retive(mAuth.getUid());
+                            Toast.makeText(registerActivity.this, "error happened , please try again later or try to login", Toast.LENGTH_LONG).show();
                             // If sign in fails, display a message to the user.
 
                         }
@@ -351,8 +356,7 @@ public class registerActivity extends AppCompatActivity {
         if(driver)
             user.put("plate","xyz 123");
         else
-            user.put("plate","null");
-
+            user.put("plate","has no car");
 
         addUser("Users",user);
     }

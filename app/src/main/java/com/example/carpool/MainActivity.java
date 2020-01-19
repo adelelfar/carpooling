@@ -119,6 +119,8 @@ public class MainActivity extends AppCompatActivity {
                 //Toast.makeText(getApplicationContext(),l.get(0).get("status").toString(),Toast.LENGTH_LONG).show();
                 Intent i = new Intent(MainActivity.this, registerActivity.class);
                 startActivity(i);
+                finish();
+
             }
         });
 
@@ -244,10 +246,14 @@ public class MainActivity extends AppCompatActivity {
 
                         Intent i = new Intent(MainActivity.this, driver.class);
                         startActivity(i);
+                        finish();
+
                     }else {
 
                         Intent i = new Intent(MainActivity.this, MapActivity.class);
                         startActivity(i);
+                        finish();
+
                     }
 
 
@@ -264,5 +270,7 @@ public class MainActivity extends AppCompatActivity {
         Intent i = new Intent(MainActivity.this, SettingsActivity.class);
         i.putExtra("mAuth", mAuth.getUid());
         startActivity(i);
+        finish();
+
     }
 }

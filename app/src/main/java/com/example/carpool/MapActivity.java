@@ -1,13 +1,10 @@
 package com.example.carpool;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -48,8 +45,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnMarkerClickListener, RoutingListener {
 
@@ -196,7 +191,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                                         , (boolean) document.getData().get("is driver")
                                         ,String.valueOf(document.getData().get("phone"))
                                         , String.valueOf(document.getData().get("Uid")));
-                              //  user_map.put(user.uid,"all");
                                 if(!users.uid.equals(mAuth.getUid())) {
                                     driversList.add(users);
                                 }
@@ -412,48 +406,53 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
         AlertDialog.Builder mbulder=new AlertDialog.Builder(MapActivity.this);
         View mview=getLayoutInflater().inflate(R.layout.driverinfo,null);
-        String info=marker.getTitle();
-        String infos[]=info.split(",");
+        String type=marker.getTitle();
+        Toast.makeText(this,type,Toast.LENGTH_LONG).show();
 
-        TextView e=(TextView) mview.findViewById(R.id.textView5);
-        e.setText(infos[0]);
-        TextView e1=(TextView) mview.findViewById(R.id.textView6);
-        e1.setText(infos[1]);
-        String type=(String) marker.getTag();
-        bdan=(String)infos[2];
+        Users u = (Users) marker.getTag();
 
-        boolean have_car=(Boolean.parseBoolean(infos[3]));
+        TextView e=(TextView) mview.findViewById(R.id.textViewUsername);
+        e.setText(u.name);
+        TextView e1=(TextView) mview.findViewById(R.id.textViewSchool);
+        e1.setText(u.schoolId);
+        TextView e2=(TextView) mview.findViewById(R.id.textViewPhone);
+        e2.setText(u.phone);
+
+        bdan=u.uid;
+
+        boolean have_car=u.haveCar;
         cancel=mview.findViewById(R.id.button6);
 
         req=mview.findViewById(R.id.button4);
         cancel.setVisibility(View.VISIBLE);
+        //marker.setTitle(type+" from "+infos[0]);
         //Toast.makeText(this,bdan.id,Toast.LENGTH_LONG).show();
         mbulder.setView(mview);
         dialog=mbulder.create();
 
-        if(type=="trip")
+        if(type.equals("trip"))
         {
             cancel.setVisibility(View.VISIBLE);
             cancel.setText("cancel trip");
-            req.setVisibility(View.GONE);
+            req.setVisibility(View.INVISIBLE);
 
         }
-        else if(type=="request")
+        else if(type.equals("request"))
         {
             cancel.setVisibility(View.VISIBLE);
-            req.setVisibility(View.GONE);
+            req.setVisibility(View.INVISIBLE);
             cancel.setText("cancel request");
         }
-       else if(type=="all")
+       else if(type.equals("user"))
         {
             req.setVisibility(View.VISIBLE);
-            cancel.setVisibility(View.GONE);
+            cancel.setVisibility(View.INVISIBLE);
 
         }
         if(!have_car)
         {
-            req.setVisibility(View.GONE);
-            cancel.setVisibility(View.GONE);
+            req.setVisibility(View.INVISIBLE);
+            cancel.setVisibility(View.INVISIBLE);
         }
       //  Toast.makeText(MapActivity.this,type,Toast.LENGTH_SHORT).show();
         //checkRequest(mAuth.getUid(),bdan);
@@ -492,21 +491,21 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
 
         for (Users request:requests)
         {
-            mMap.addMarker(new MarkerOptions().position( new LatLng(request.position.getLatitude(),request.position.getLongitude())).title(request.name+","+request.phone+" school requestttt"+","+request.uid+","+request.haveCar)).setTag("request");
+            mMap.addMarker(new MarkerOptions().position( new LatLng(request.position.getLatitude(),request.position.getLongitude())).title("request")).setTag(request);
 
             //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
             mMap.setOnMarkerClickListener(this);
         }
         for (Users trip:trips)
         {
-            mMap.addMarker(new MarkerOptions().position( new LatLng(trip.position.getLatitude(),trip.position.getLongitude())).title(trip.name+","+trip.phone+" school tripppp"+","+trip.uid+","+trip.haveCar)).setTag("trip");
+            mMap.addMarker(new MarkerOptions().position( new LatLng(trip.position.getLatitude(),trip.position.getLongitude())).title("trip")).setTag(trip);
 
             mMap.setOnMarkerClickListener(this);
         }
         for (Users driver:driversList)
         {
             if(!user_map.containsKey(driver.uid)) {
-                mMap.addMarker(new MarkerOptions().position(new LatLng(driver.position.getLatitude(), driver.position.getLongitude())).title(driver.name + "," + driver.phone + "," + driver.uid + "," + driver.haveCar)).setTag("all");
+                mMap.addMarker(new MarkerOptions().position(new LatLng(driver.position.getLatitude(), driver.position.getLongitude())).title("user")).setTag(driver);
 
                 mMap.setOnMarkerClickListener(this);
             }
@@ -599,5 +598,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         Intent i = new Intent(MapActivity.this, SettingsActivity.class);
         i.putExtra("mAuth", mAuth.getUid());
         startActivity(i);
+        finish();
     }
 }

@@ -2,19 +2,15 @@ package com.example.carpool;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,8 +31,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -46,15 +40,10 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.jcminarro.roundkornerlayout.RoundKornerRelativeLayout;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 public class driver extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnMarkerClickListener {
 
@@ -80,7 +69,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
 
     boolean isRequest=false;
     boolean see_all;
-
+    int zoom =10;
     Button req,cancel ;
     TextView phoreq,userreq,locreq,requesteridd;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -197,6 +186,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
                                 country=(String) document.getData().get("country");
                                 user = new Users(name, l, id, schoolId, isDriver,phone,uid);
                                 //progressBar.setVisibility(View.GONE);
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(user.position.getLatitude(),user.position.getLongitude() ),zoom ));
                                 break;
 
                             }
@@ -491,20 +481,25 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     public boolean onMarkerClick(Marker marker) {
         AlertDialog.Builder mbulder=new AlertDialog.Builder(driver.this);
         View mview=getLayoutInflater().inflate(R.layout.driverinfo,null);
-        String info=marker.getTitle();
-        String infos[]=info.split(",");
+        String type=marker.getTitle();
+        Toast.makeText(this,type,Toast.LENGTH_LONG).show();
 
-        TextView e=(TextView) mview.findViewById(R.id.textView5);
-        e.setText(infos[0]);
-        TextView e1=(TextView) mview.findViewById(R.id.textView6);
-        e1.setText(infos[1]);
-        String type=(String) marker.getTag();
-        bdan=(String)infos[2];
+        Users u = (Users) marker.getTag();
+
+        TextView e=(TextView) mview.findViewById(R.id.textViewUsername);
+        e.setText(u.name);
+        TextView e1=(TextView) mview.findViewById(R.id.textViewSchool);
+        e1.setText(u.schoolId);
+        TextView e2=(TextView) mview.findViewById(R.id.textViewPhone);
+        e2.setText(u.phone);
+
+        bdan=u.uid;
+
+        boolean have_car=u.haveCar;
         cancel=mview.findViewById(R.id.button6);
 
         req=mview.findViewById(R.id.button4);
         cancel.setVisibility(View.VISIBLE);
-        //Toast.makeText(this,bdan.id,Toast.LENGTH_LONG).show();
         mbulder.setView(mview);
         dialog=mbulder.create();
 
@@ -532,7 +527,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
     void func()
     {
 
-        Toast.makeText(driver.this,"hi",Toast.LENGTH_LONG).show();
+        Toast.makeText(driver.this,"waiting for requests , you can switch to user mode by disabling having car from settings",Toast.LENGTH_LONG).show();
 
         db.collection("Requests")
                 .whereEqualTo("requestedId", mAuth.getUid())
@@ -659,14 +654,15 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         Intent i = new Intent(driver.this, SettingsActivity.class);
         i.putExtra("mAuth", mAuth.getUid());
         startActivity(i);
+        finish();
     }
 
     void show_requests_location()
     {
-        for (Users requester:requesters)
+        for (Users request:requesters)
         {
 
-            mMap.addMarker(new MarkerOptions().position( new LatLng(requester.position.getLatitude(),requester.position.getLongitude())).title(requester.name+","+requester.phone+" school requestttt"+","+requester.uid)).setTag("request");
+            mMap.addMarker(new MarkerOptions().position( new LatLng(request.position.getLatitude(),request.position.getLongitude())).title("request")).setTag(request);
 
             //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
             mMap.setOnMarkerClickListener(this);
@@ -677,7 +673,7 @@ public class driver extends FragmentActivity implements OnMapReadyCallback,Googl
         for (Users trip:trips)
         {
 
-            mMap.addMarker(new MarkerOptions().position( new LatLng(trip.position.getLatitude(),trip.position.getLongitude())).title(trip.name+","+trip.phone+" school tripppp"+","+trip.uid)).setTag("trip");
+            mMap.addMarker(new MarkerOptions().position( new LatLng(trip.position.getLatitude(),trip.position.getLongitude())).title("trip")).setTag(trip);
 
             //       mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(driver.position.getLatitude(),driver.position.getLongitude())));
             mMap.setOnMarkerClickListener(this);
